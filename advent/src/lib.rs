@@ -9,7 +9,7 @@
 /// ```
 /// to import a bunch of useful things.
 pub mod prelude {
-    pub use super::Grid;
+    pub use super::{Direction4, Direction8, Grid};
     pub use advent_macro::*;
     pub use derive_more::{Debug as DebugMore, Display as DisplayMore};
     pub use parse::prelude::*;
@@ -21,6 +21,7 @@ pub use parse;
 
 use std::fmt;
 use std::marker::PhantomData;
+use strum::EnumIter;
 
 /// Represents one horizontal row of a [`Grid`]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -1333,4 +1334,91 @@ fn min_test() {
 
     assert_eq!(m.get(), Some(10));
     assert_eq!(Min::<i32>::new().get(), None);
+}
+
+/// The cardinal directions
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, EnumIter)]
+#[allow(missing_docs)]
+pub enum Direction4 {
+    North,
+    South,
+    East,
+    West,
+}
+
+impl Direction4 {
+    /// Take a positions in a 2d matrix and advance it by the given direction. If the new position
+    /// would be off the grid, returns None.
+    pub fn advance(
+        &self,
+        y: usize,
+        x: usize,
+        width: usize,
+        height: usize,
+    ) -> Option<(usize, usize)> {
+        match self {
+            Self::North => (y > 0).then(|| (y - 1, x)),
+            Self::South => (y < height - 1).then(|| (y + 1, x)),
+            Self::West => (x > 0).then(|| (y, x - 1)),
+            Self::East => (x < width - 1).then(|| (y, x + 1)),
+        }
+    }
+}
+
+/// The cardinal directions plus intercardinal directions
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, EnumIter)]
+#[allow(missing_docs)]
+pub enum Direction8 {
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
+}
+
+impl Direction8 {
+    /// Take a positions in a 2d matrix and advance it by the given direction. If the new position
+    /// would be off the grid, returns None.
+    pub fn advance(
+        &self,
+        mut x: usize,
+        mut y: usize,
+        width: usize,
+        height: usize,
+    ) -> Option<(usize, usize)> {
+        match self {
+            Self::North | Self::NorthEast | Self::NorthWest => {
+                if y == 0 {
+                    return None;
+                }
+                y -= 1;
+            }
+            Self::South | Self::SouthEast | Self::SouthWest => {
+                if y >= height - 1 {
+                    return None;
+                }
+                y += 1;
+            }
+            _ => {}
+        }
+        match self {
+            Self::East | Self::NorthEast | Self::SouthEast => {
+                if x >= width - 1 {
+                    return None;
+                }
+                x += 1;
+            }
+            Self::West | Self::NorthWest | Self::SouthWest => {
+                if x == 0 {
+                    return None;
+                }
+                x -= 1;
+            }
+            _ => {}
+        }
+        Some((x, y))
+    }
 }
