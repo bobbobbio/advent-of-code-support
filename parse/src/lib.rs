@@ -188,6 +188,11 @@ pub struct TermWith<T>(PhantomData<T>);
 #[derive(Debug, Clone, Copy)]
 pub struct StartsWith<T>(PhantomData<T>);
 
+/// Parse control type which causes collections to parse the given type between the elements, and
+/// allows for optional separator at the beginning and end of the collection.
+#[derive(Debug, Clone, Copy)]
+pub struct SurroundedBy<T>(PhantomData<T>);
+
 /// A vector which implements [`HasParser`] in a way controllable via the second generic parameter.
 #[derive(Clone)]
 pub struct List<T, Sep>(Vec<T>, PhantomData<Sep>);
@@ -283,6 +288,15 @@ impl<T: HasParser, Sep: HasParser> HasParser for List<T, StartsWith<Sep>> {
     #[into_parser]
     fn parser() -> _ {
         many1(attempt(Sep::parser().with(T::parser()))).map(|v: Vec<_>| v.into())
+    }
+}
+
+impl<T: HasParser, Sep: HasParser> HasParser for List<T, SurroundedBy<Sep>> {
+    #[into_parser]
+    fn parser() -> _ {
+        optional(Sep::parser())
+            .with(many1(T::parser().skip(optional(Sep::parser()))))
+            .map(|v: Vec<_>| v.into())
     }
 }
 

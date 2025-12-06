@@ -114,3 +114,13 @@ fn unit_struct() {
     test_parse(Foo, "foo");
     test_parse(Baz, "qux");
 }
+
+#[test]
+fn list_parsing() {
+    test_parse::<List<u32, SepBy<Space>>>(vec![1, 2, 3].into(), "1 2 3");
+    test_parse::<List<u32, SepBy<Spaces>>>(vec![1, 2, 3].into(), "1    2      3");
+    test_parse::<List<u32, TermWith<Space>>>(vec![1, 2, 3].into(), "1 2 3 ");
+    test_parse::<List<u32, StartsWith<Space>>>(vec![1, 2, 3].into(), " 1 2 3");
+    test_parse::<List<u32, SurroundedBy<Space>>>(vec![1, 2, 3].into(), " 1 2 3 ");
+    test_parse::<List<u32, SurroundedBy<Spaces>>>(vec![1, 2, 3].into(), "  1  2     3     ");
+}
